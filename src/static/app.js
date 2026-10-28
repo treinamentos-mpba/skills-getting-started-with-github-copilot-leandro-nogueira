@@ -10,8 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and previously loaded options
       activitiesList.innerHTML = "";
+      activitySelect.querySelectorAll("option:not([value=''])").forEach((opt) => opt.remove());
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -27,6 +28,33 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
 
+        const participantsSection = document.createElement("div");
+        participantsSection.className = "participants";
+
+        const participantsTitle = document.createElement("h5");
+        participantsTitle.textContent = "Participantes ";
+        const count = document.createElement("span");
+        count.className = "participants-count";
+        count.textContent = `${details.participants.length}/${details.max_participants}`;
+        participantsTitle.appendChild(count);
+        participantsSection.appendChild(participantsTitle);
+
+        if (details.participants.length > 0) {
+          const list = document.createElement("ul");
+          details.participants.forEach((participant) => {
+            const item = document.createElement("li");
+            item.textContent = participant;
+            list.appendChild(item);
+          });
+          participantsSection.appendChild(list);
+        } else {
+          const empty = document.createElement("p");
+          empty.className = "participants-empty";
+          empty.textContent = "Nenhum participante inscrito ainda. Seja o primeiro!";
+          participantsSection.appendChild(empty);
+        }
+
+        activityCard.appendChild(participantsSection);
         activitiesList.appendChild(activityCard);
 
         // Add option to select dropdown
@@ -62,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
