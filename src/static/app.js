@@ -43,7 +43,20 @@ document.addEventListener("DOMContentLoaded", () => {
           const list = document.createElement("ul");
           details.participants.forEach((participant) => {
             const item = document.createElement("li");
-            item.textContent = participant;
+
+            const emailSpan = document.createElement("span");
+            emailSpan.className = "participant-email";
+            emailSpan.textContent = participant;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "delete-participant";
+            deleteBtn.title = `Remover ${participant}`;
+            deleteBtn.setAttribute("aria-label", `Remover ${participant} de ${name}`);
+            deleteBtn.innerHTML = "&#128465;";
+            deleteBtn.addEventListener("click", () => unregisterParticipant(name, participant));
+
+            item.append(emailSpan, deleteBtn);
             list.appendChild(item);
           });
           participantsSection.appendChild(list);
@@ -66,6 +79,37 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
+    }
+  }
+
+  function showMessage(text, type) {
+    messageDiv.textContent = text;
+    messageDiv.className = type;
+    messageDiv.classList.remove("hidden");
+    setTimeout(() => {
+      messageDiv.classList.add("hidden");
+    }, 5000);
+  }
+
+  async function unregisterParticipant(activity, email) {
+    if (!confirm(`Remover ${email} de ${activity}?`)) return;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+        { method: "DELETE" }
+      );
+      const result = await response.json();
+
+      if (response.ok) {
+        showMessage(result.message, "success");
+        fetchActivities();
+      } else {
+        showMessage(result.detail || "An error occurred", "error");
+      }
+    } catch (error) {
+      showMessage("Failed to unregister. Please try again.", "error");
+      console.error("Error unregistering:", error);
     }
   }
 
